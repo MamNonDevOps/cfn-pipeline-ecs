@@ -1,11 +1,10 @@
 ---
 AWSTemplateFormatVersion: 2010-09-09
 
-
 Parameters:
   LaunchType:
     Type: String
-    Default: Fargate
+    Default: EC2
     AllowedValues:
       - Fargate
       - EC2
@@ -14,8 +13,7 @@ Parameters:
     Type: List<AWS::EC2::Subnet::Id>
 
   VpcId:
-    Type: String
-
+    Type: AWS::EC2::VPC::Id
 
 Conditions:
   EC2: !Equals [ !Ref LaunchType, "EC2" ]
@@ -23,7 +21,7 @@ Conditions:
 
 Resources:
   SecurityGroup:
-    Type: "AWS::EC2::SecurityGroup"
+    Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: !Sub ${AWS::StackName}-alb
       SecurityGroupIngress:
@@ -81,7 +79,6 @@ Resources:
       Actions:
         - TargetGroupArn: !Ref TargetGroup
           Type: forward
-
 
 Outputs:
   TargetGroup:

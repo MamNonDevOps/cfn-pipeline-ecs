@@ -1,20 +1,22 @@
 ---
 AWSTemplateFormatVersion: 2010-09-09
 
-
 Parameters:
   Name:
     Type: String
+    Default: test-ecs-111
 
   VpcCIDR:
     Type: String
+    Default: 10.192.0.0/20
 
   Subnet1CIDR:
     Type: String
+    Default: 10.192.11.0/24
 
   Subnet2CIDR:
     Type: String
-
+    Default: 10.192.12.0/24
 
 Resources:
   VPC:
@@ -87,9 +89,9 @@ Resources:
       RouteTableId: !Ref RouteTable
       SubnetId: !Ref Subnet2
 
-
 Outputs:
   Subnets:
     Value: !Join [ ",", [ !Ref Subnet1, !Ref Subnet2 ] ]
+
   VpcId:
     Value: !Ref VPC

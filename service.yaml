@@ -1,10 +1,10 @@
 ---
 AWSTemplateFormatVersion: 2010-09-09
 
-
 Parameters:
   Cluster:
     Type: String
+    Default: test-ecs-cluster
 
   DesiredCount:
     Type: Number
@@ -12,13 +12,14 @@ Parameters:
 
   LaunchType:
     Type: String
-    Default: Fargate
+    Default: EC2
     AllowedValues:
       - Fargate
       - EC2
 
-  TargetGroup:
+  TargetGroupArn:
     Type: String
+    Default: arn:aws:elasticloadbalancing:us-east-1:269597175775:targetgroup/test-Targe-1P8UX6L8RB7CE/3d291023efbabc88
 
   SourceSecurityGroup:
     Type: AWS::EC2::SecurityGroup::Id
@@ -26,12 +27,9 @@ Parameters:
   Subnets:
     Type: List<AWS::EC2::Subnet::Id>
 
-
 Conditions:
   Fargate: !Equals [ !Ref LaunchType, "Fargate" ]
-
   EC2: !Equals [ !Ref LaunchType, "EC2" ]
-
 
 Resources:
   TaskExecutionRole:
@@ -70,7 +68,7 @@ Resources:
       LoadBalancers:
         - ContainerName: simple-app
           ContainerPort: 80
-          TargetGroupArn: !Ref TargetGroup
+          TargetGroupArn: !Ref TargetGroupArn
 
   EC2Service:
     Type: AWS::ECS::Service
@@ -80,10 +78,16 @@ Resources:
       DesiredCount: !Ref DesiredCount
       TaskDefinition: !Ref TaskDefinition
       LaunchType: EC2
+      # NetworkConfiguration:
+      #   AwsvpcConfiguration:
+      #     AssignPublicIp: ENABLED
+      #     SecurityGroups:
+      #       - !Ref SourceSecurityGroup
+      #     Subnets: !Ref Subnets
       LoadBalancers:
         - ContainerName: simple-app
           ContainerPort: 80
-          TargetGroupArn: !Ref TargetGroup
+          TargetGroupArn: !Ref TargetGroupArn
 
   TaskDefinition:
     Type: AWS::ECS::TaskDefinition
@@ -97,11 +101,11 @@ Resources:
       ExecutionRoleArn: !Ref TaskExecutionRole
       ContainerDefinitions:
         - Name: simple-app
-          Image: amazon/amazon-ecs-sample
+          Image: public.ecr.aws/nginx/nginx:mainline
           EntryPoint:
-            - /usr/sbin/apache2
-            - -D
-            - FOREGROUND
+            - nginx
+            - -g
+            - daemon off;
           Essential: true
           Memory: 256
           MountPoints:
@@ -128,7 +132,6 @@ Resources:
             - /bin/sh -c "while true; do /bin/date > /var/www/my-vol/date; sleep 1; done"
       Volumes:
         - Name: my-vol
-
 
 Outputs:
   Service:
