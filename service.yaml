@@ -23,9 +23,11 @@ Parameters:
 
   SourceSecurityGroup:
     Type: AWS::EC2::SecurityGroup::Id
+    Default: sg-0be221666d7ed1c56
 
   Subnets:
     Type: List<AWS::EC2::Subnet::Id>
+    Default: subnet-08c8af468829b4fc4,subnet-0bbffa7a9dcf57f99
 
 Conditions:
   Fargate: !Equals [ !Ref LaunchType, "Fargate" ]
@@ -66,7 +68,7 @@ Resources:
             - !Ref SourceSecurityGroup
           Subnets: !Ref Subnets
       LoadBalancers:
-        - ContainerName: simple-app
+        - ContainerName: swim-app
           ContainerPort: 80
           TargetGroupArn: !Ref TargetGroupArn
 
@@ -85,53 +87,60 @@ Resources:
       #       - !Ref SourceSecurityGroup
       #     Subnets: !Ref Subnets
       LoadBalancers:
-        - ContainerName: simple-app
+        - ContainerName: swim-web-server
           ContainerPort: 80
           TargetGroupArn: !Ref TargetGroupArn
 
   TaskDefinition:
     Type: AWS::ECS::TaskDefinition
     Properties:
-      Family: !Sub ${AWS::StackName}-simple-app
+      Family: !Sub ${AWS::StackName}-swim-family
       RequiresCompatibilities:
         - !If [ Fargate, "FARGATE", "EC2" ]
       Memory: 512
       Cpu: 256
       NetworkMode: !If [ Fargate, "awsvpc", "bridge" ]
       ExecutionRoleArn: !Ref TaskExecutionRole
+      Volumes:
+        - Name: main-vol
       ContainerDefinitions:
-        - Name: simple-app
-          Image: public.ecr.aws/nginx/nginx:mainline
-          EntryPoint:
-            - nginx
-            - -g
-            - daemon off;
+        # - Name: swim-app
+        #   Image: php:7.3-fpm
+        #   EntryPoint:
+        #     - php-fpm
+        #   Essential: true
+        #   Memory: 256
+        #   MountPoints:
+        #     - SourceVolume: main-vol
+        #       ContainerPath: /var/www/
+        #   PortMappings:
+        #     - ContainerPort: 9000
+        #   LogConfiguration:
+        #     LogDriver: awslogs
+        #     Options:
+        #       awslogs-region: !Ref AWS::Region
+        #       awslogs-group: !Ref LogGroup
+        #       awslogs-stream-prefix: swim-app
+        - Name: swim-web-server
+          Image: nginx
+          # EntryPoint:
+          #   - /usr/sbin/nginx
           Essential: true
           Memory: 256
           MountPoints:
-            - SourceVolume: my-vol
-              ContainerPath: /var/www/my-vol
+            - SourceVolume: main-vol
+              ContainerPath: /var/www/
           PortMappings:
             - ContainerPort: 80
+          DependsOn:
+            - ContainerName: swim-app
+              Condition: START
           LogConfiguration:
             LogDriver: awslogs
             Options:
               awslogs-region: !Ref AWS::Region
               awslogs-group: !Ref LogGroup
               awslogs-stream-prefix: !Ref AWS::StackName
-        - Name: busybox
-          Image: busybox
-          EntryPoint:
-            - sh
-            - -c
-          Essential: true
-          Memory: 256
-          VolumesFrom:
-            - SourceContainer: simple-app
-          Command:
-            - /bin/sh -c "while true; do /bin/date > /var/www/my-vol/date; sleep 1; done"
-      Volumes:
-        - Name: my-vol
 
 Outputs:
   Service:
