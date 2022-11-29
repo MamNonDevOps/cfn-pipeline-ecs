@@ -104,23 +104,23 @@ Resources:
       Volumes:
         - Name: main-vol
       ContainerDefinitions:
-        # - Name: swim-app
-        #   Image: php:7.3-fpm
-        #   EntryPoint:
-        #     - php-fpm
-        #   Essential: true
-        #   Memory: 256
-        #   MountPoints:
-        #     - SourceVolume: main-vol
-        #       ContainerPath: /var/www/
-        #   PortMappings:
-        #     - ContainerPort: 9000
-        #   LogConfiguration:
-        #     LogDriver: awslogs
-        #     Options:
-        #       awslogs-region: !Ref AWS::Region
-        #       awslogs-group: !Ref LogGroup
-        #       awslogs-stream-prefix: swim-app
+        - Name: swim-app
+          Image: php:7.3-fpm
+          # EntryPoint:
+          #   - php-fpm
+          Essential: true
+          Memory: 256
+          MountPoints:
+            - SourceVolume: main-vol
+              ContainerPath: /var/www/
+          PortMappings:
+            - ContainerPort: 9000
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-region: !Ref AWS::Region
+              awslogs-group: !Ref LogGroup
+              awslogs-stream-prefix: swim-app
         - Name: swim-web-server
           Image: nginx
           # EntryPoint:
