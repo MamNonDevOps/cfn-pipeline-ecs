@@ -16,7 +16,7 @@ Parameters:
 
   ServiceArn:
     Type: String
-    Default: arn:aws:ecs:us-east-1:269597175775:service/test-ecs-cluster/test-ecs-service-EC2Service-xLIeKMbK7xyH
+    Default: arn:aws:ecs:us-east-1:269597175775:service/test-ecs-cluster/test-ecs-service-EC2Service-AxUtCfX6llaC
 
 Resources:
   AppImgRepo:
@@ -24,12 +24,6 @@ Resources:
     # DeletionPolicy: Retain
     Properties:
       RepositoryName: app-img
-
-  WebServerImgRepo:
-    Type: AWS::ECR::Repository
-    # DeletionPolicy: Retain
-    Properties:
-      RepositoryName: web-server-img
 
   ArtifactBucket:
     Type: AWS::S3::Bucket
@@ -71,7 +65,6 @@ Resources:
                   - s3:GetObjectVersion
               - Resource:
                   - !Sub arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/${AppImgRepo}
-                  - !Sub arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/${WebServerImgRepo}
                 Effect: Allow
                 Action:
                   - ecr:GetDownloadUrlForLayer
@@ -132,43 +125,25 @@ Resources:
   CodeBuildProject:
     Type: AWS::CodeBuild::Project
     Properties:
+      Name: !Ref AWS::StackName
+      ServiceRole: !Ref CodeBuildServiceRole
       Artifacts:
         Type: CODEPIPELINE
       Source:
         Type: CODEPIPELINE
-        BuildSpec: |
-          version: 0.2
-          phases:
-            pre_build:
-              commands:
-                - $(aws ecr get-login --no-include-email)
-                - TAG="$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | head -c 8)"
-                - APP_IMAGE_URI="${APP_REPO_URI}:${TAG}"
-                - WEB_SERVER_IMAGE_URI="${WEB_SERVER_REPO_URI}:${TAG}"
-            build:
-              commands:
-                - docker build --tag "$APP_IMAGE_URI" -f Dockerfile .
-                - docker build --tag "$WEB_SERVER_IMAGE_URI" -f Dockerfile-nginx .
-            post_build:
-              commands:
-                - docker push "$APP_IMAGE_URI"
-                - docker push "$WEB_SERVER_IMAGE_URI"
-                - printf '[{"name":"swim-app","imageUri":"%s"},{"name":"swim-web-server","imageUri":"%s"}]' "$APP_IMAGE_URI" "$WEB_SERVER_IMAGE_URI" > images.json
-          artifacts:
-            files: images.json
+        BuildSpec: buildspec-container.yml
       Environment:
-        ComputeType: BUILD_GENERAL1_SMALL
-        Image: aws/codebuild/docker:17.09.0
+        ComputeType: BUILD_GENERAL1_MEDIUM
         Type: LINUX_CONTAINER
+        Image: aws/codebuild/standard:6.0
+        PrivilegedMode: true
         EnvironmentVariables:
           - Name: AWS_DEFAULT_REGION
             Value: !Ref AWS::Region
+          - Name: AWS_ACCOUNT_ID
+            Value: !Ref AWS::AccountId
           - Name: APP_REPO_URI
             Value: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${AppImgRepo}
-          - Name: WEB_SERVER_REPO_URI
-            Value: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${WebServerImgRepo}
-      Name: !Ref AWS::StackName
-      ServiceRole: !Ref CodeBuildServiceRole
 
   Pipeline:
     Type: AWS::CodePipeline::Pipeline
@@ -208,6 +183,15 @@ Resources:
               OutputArtifacts:
                 - Name: BuildOutput
               RunOrder: 1
+        # - Name: Approval
+        #   Actions:
+        #     - Name: ProdApproval
+        #       ActionTypeId:
+        #         Category: Approval
+        #         Owner: AWS
+        #         Version: 1
+        #         Provider: Manual
+        #       RunOrder: 1
         # - Name: Deploy
         #   Actions:
         #     - Name: Deploy

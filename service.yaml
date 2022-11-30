@@ -68,7 +68,7 @@ Resources:
             - !Ref SourceSecurityGroup
           Subnets: !Ref Subnets
       LoadBalancers:
-        - ContainerName: swim-app
+        - ContainerName: app
           ContainerPort: 80
           TargetGroupArn: !Ref TargetGroupArn
 
@@ -87,54 +87,32 @@ Resources:
       #       - !Ref SourceSecurityGroup
       #     Subnets: !Ref Subnets
       LoadBalancers:
-        - ContainerName: swim-web-server
+        - ContainerName: app
           ContainerPort: 80
           TargetGroupArn: !Ref TargetGroupArn
 
   TaskDefinition:
     Type: AWS::ECS::TaskDefinition
     Properties:
-      Family: !Sub ${AWS::StackName}-swim-family
+      Family: !Sub ${AWS::StackName}-app-family
       RequiresCompatibilities:
         - !If [ Fargate, "FARGATE", "EC2" ]
-      Memory: 512
-      Cpu: 256
+      Cpu: 1024
+      Memory: 1024
       NetworkMode: !If [ Fargate, "awsvpc", "bridge" ]
       ExecutionRoleArn: !Ref TaskExecutionRole
       Volumes:
         - Name: main-vol
       ContainerDefinitions:
-        - Name: swim-app
-          Image: php:7.3-fpm
-          # EntryPoint:
-          #   - php-fpm
-          Essential: true
-          Memory: 256
-          MountPoints:
-            - SourceVolume: main-vol
-              ContainerPath: /var/www/
-          PortMappings:
-            - ContainerPort: 9000
-          LogConfiguration:
-            LogDriver: awslogs
-            Options:
-              awslogs-region: !Ref AWS::Region
-              awslogs-group: !Ref LogGroup
-              awslogs-stream-prefix: swim-app
-        - Name: swim-web-server
+        - Name: app
           Image: nginx
-          # EntryPoint:
-          #   - /usr/sbin/nginx
           Essential: true
-          Memory: 256
+          Memory: 1024
           MountPoints:
             - SourceVolume: main-vol
               ContainerPath: /var/www/
           PortMappings:
             - ContainerPort: 80
-          DependsOn:
-            - ContainerName: swim-app
-              Condition: START
           LogConfiguration:
             LogDriver: awslogs
             Options:
