@@ -11,13 +11,14 @@ Parameters:
 
   Subnets:
     Type: List<AWS::EC2::Subnet::Id>
+    Default: subnet-08c8af468829b4fc4,subnet-0bbffa7a9dcf57f99
 
   VpcId:
     Type: AWS::EC2::VPC::Id
+    Default: vpc-0f6752103bf8e4ab0
 
 Conditions:
   EC2: !Equals [ !Ref LaunchType, "EC2" ]
-
 
 Resources:
   SecurityGroup:
@@ -57,7 +58,7 @@ Resources:
       Protocol: HTTP
       Matcher:
         HttpCode: 200-299
-      HealthCheckIntervalSeconds: 10
+      HealthCheckIntervalSeconds: 30
       HealthCheckPath: /
       HealthCheckProtocol: HTTP
       HealthCheckTimeoutSeconds: 5
@@ -67,18 +68,18 @@ Resources:
         - Key: deregistration_delay.timeout_seconds
           Value: 30
 
-  ListenerRule:
-    Type: AWS::ElasticLoadBalancingV2::ListenerRule
-    Properties:
-      ListenerArn: !Ref LoadBalancerListener
-      Priority: 1
-      Conditions:
-        - Field: path-pattern
-          Values:
-            - /
-      Actions:
-        - TargetGroupArn: !Ref TargetGroup
-          Type: forward
+  # ListenerRule:
+  #   Type: AWS::ElasticLoadBalancingV2::ListenerRule
+  #   Properties:
+  #     ListenerArn: !Ref LoadBalancerListener
+  #     Priority: 1
+  #     Conditions:
+  #       - Field: path-pattern
+  #         Values:
+  #           - /
+  #     Actions:
+  #       - TargetGroupArn: !Ref TargetGroup
+  #         Type: forward
 
 Outputs:
   TargetGroup:

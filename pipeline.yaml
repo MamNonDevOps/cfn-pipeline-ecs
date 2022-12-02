@@ -183,30 +183,30 @@ Resources:
               OutputArtifacts:
                 - Name: BuildOutput
               RunOrder: 1
-        # - Name: Approval
-        #   Actions:
-        #     - Name: ProdApproval
-        #       ActionTypeId:
-        #         Category: Approval
-        #         Owner: AWS
-        #         Version: 1
-        #         Provider: Manual
-        #       RunOrder: 1
-        # - Name: Deploy
-        #   Actions:
-        #     - Name: Deploy
-        #       ActionTypeId:
-        #         Category: Deploy
-        #         Owner: AWS
-        #         Version: 1
-        #         Provider: ECS
-        #       Configuration:
-        #         ClusterName: !Ref Cluster
-        #         ServiceName: !Ref ServiceArn
-        #         FileName: images.json
-        #       InputArtifacts:
-        #         - Name: BuildOutput
-        #       RunOrder: 1
+        - Name: Approval
+          Actions:
+            - Name: ProdApproval
+              ActionTypeId:
+                Category: Approval
+                Owner: AWS
+                Version: 1
+                Provider: Manual
+              RunOrder: 1
+        - Name: Deploy
+          Actions:
+            - Name: Deploy
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Version: 1
+                Provider: ECS
+              Configuration:
+                ClusterName: !Ref Cluster
+                ServiceName: !Ref ServiceArn
+                FileName: images.json
+              InputArtifacts:
+                - Name: BuildOutput
+              RunOrder: 1
 
 Outputs:
   PipelineUrl:

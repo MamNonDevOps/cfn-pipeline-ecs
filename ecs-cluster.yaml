@@ -23,7 +23,7 @@ Parameters:
 
   SourceSecurityGroup:
     Type: AWS::EC2::SecurityGroup::Id
-    Default: sg-0be221666d7ed1c56
+    Default: sg-0061928bb65dc3b04
 
   VpcId:
     Type: AWS::EC2::VPC::Id

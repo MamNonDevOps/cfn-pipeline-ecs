@@ -8,7 +8,7 @@ Parameters:
 
   DesiredCount:
     Type: Number
-    Default: 1
+    Default: 2
 
   LaunchType:
     Type: String
@@ -19,11 +19,11 @@ Parameters:
 
   TargetGroupArn:
     Type: String
-    Default: arn:aws:elasticloadbalancing:us-east-1:269597175775:targetgroup/test-Targe-1P8UX6L8RB7CE/3d291023efbabc88
+    Default: arn:aws:elasticloadbalancing:us-east-1:269597175775:targetgroup/test-Targe-XM1P5ECOBBAK/2e12aa0e4fda77d8
 
   SourceSecurityGroup:
     Type: AWS::EC2::SecurityGroup::Id
-    Default: sg-0be221666d7ed1c56
+    Default: sg-0061928bb65dc3b04
 
   Subnets:
     Type: List<AWS::EC2::Subnet::Id>
@@ -80,12 +80,6 @@ Resources:
       DesiredCount: !Ref DesiredCount
       TaskDefinition: !Ref TaskDefinition
       LaunchType: EC2
-      # NetworkConfiguration:
-      #   AwsvpcConfiguration:
-      #     AssignPublicIp: ENABLED
-      #     SecurityGroups:
-      #       - !Ref SourceSecurityGroup
-      #     Subnets: !Ref Subnets
       LoadBalancers:
         - ContainerName: app
           ContainerPort: 80
@@ -99,6 +93,7 @@ Resources:
         - !If [ Fargate, "FARGATE", "EC2" ]
       Cpu: 1024
       Memory: 1024
+      # Memory: 2048 #With Fargate, CPU 1024 must need RAM 2048
       NetworkMode: !If [ Fargate, "awsvpc", "bridge" ]
       ExecutionRoleArn: !Ref TaskExecutionRole
       Volumes:
